@@ -939,6 +939,17 @@ router.post('/send-email', async (req, res) => {
   }
 });
 
+// Endpoint to fetch all usernames
+router.get('/usernames', async (req, res) => {
+    try {
+        const usernames = await User.find({}, 'username'); // Fetch only the 'username' field
+        res.json(usernames);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
 
 
 
