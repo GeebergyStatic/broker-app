@@ -9,7 +9,6 @@ const cron = require('node-cron');
 const axios = require('axios');
 
 const uri = process.env.uri;
-// const uri = "mongodb+srv://nexusfxinvestmentblog:nexusfxpassword@nexusfx.mjiu6l6.mongodb.net/userData?retryWrites=true&w=majority";
 
 async function connectToMongoDB() {
   try {
@@ -942,6 +941,28 @@ router.get('/usernames', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
     }
+});
+
+// **Update User Role to Agent**
+router.put("/update-user", async (req, res) => {
+  const { role, agentID } = req.body;
+
+
+  try {
+      const updatedUser = await User.findByIdAndUpdate(req.user.id, 
+          { role, agentID }, 
+          { new: true }
+      );
+
+      if (!updatedUser) {
+          return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User role updated successfully", user: updatedUser });
+  } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Server error" });
+  }
 });
 
 
