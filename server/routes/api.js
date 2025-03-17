@@ -944,7 +944,7 @@ router.get('/usernames', async (req, res) => {
 });
 
 // **Update User Role to Agent**
-router.post("/update-user", async (req, res) => {
+router.put("/update-user", async (req, res) => {
   const { role, agentID, userId } = req.body; // Extract userId from body
 
   try {
@@ -959,7 +959,7 @@ router.post("/update-user", async (req, res) => {
       const updatedUser = await User.findByIdAndUpdate(
           userId, // Use userId from request body
           { role, agentID },
-          { new: true }
+          // { new: true }
       );
 
       if (!updatedUser) {
