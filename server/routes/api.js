@@ -945,12 +945,20 @@ router.get('/usernames', async (req, res) => {
 
 // **Update User Role to Agent**
 router.put("/update-user", async (req, res) => {
-  const { role, agentID } = req.body;
-
+  const { role, agentID, userId } = req.body; // Extract userId from body
 
   try {
-      const updatedUser = await User.findByIdAndUpdate(req.user.id, 
-          { role, agentID }, 
+      // Check if the agentID already exists for another user
+      const existingUser = await User.findOne({ agentID });
+
+      if (existingUser) {
+          return res.status(400).json({ message: "Agent ID already in use" });
+      }
+
+      // Proceed with update
+      const updatedUser = await User.findByIdAndUpdate(
+          userId, // Use userId from request body
+          { role, agentID },
           { new: true }
       );
 
