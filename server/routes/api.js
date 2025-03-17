@@ -948,28 +948,28 @@ router.put("/update-user", async (req, res) => {
   const { role, agentID, userId } = req.body; // Extract userId from body
 
   try {
-      // Check if the agentID already exists for another user
-      const existingUser = await User.findOne({ agentID });
+    // Check if the agentID already exists for another user
+    const existingUser = await User.findOne({ agentID });
 
-      if (existingUser) {
-          return res.status(400).json({ message: "Agent ID already in use" });
-      }
+    if (existingUser) {
+      return res.status(400).json({ message: "Agent ID already in use" });
+    }
 
-      // Proceed with update
-      const updatedUser = await User.findByIdAndUpdate(
-          userId, // Use userId from request body
-          { role, agentID },
-          // { new: true }
-      );
+    // Use findOneAndUpdate instead of findByIdAndUpdate
+    const updatedUser = await User.findOneAndUpdate(
+      { userId }, // Search using userId as a field, NOT _id
+      { role, agentID },
+      { new: true } // Return updated user
+    );
 
-      if (!updatedUser) {
-          return res.status(404).json({ message: "User not found" });
-      }
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-      res.json({ message: "User role updated successfully", user: updatedUser });
+    res.json({ message: "User role updated successfully", user: updatedUser });
   } catch (error) {
-      console.error("Error updating user:", error);
-      res.status(500).json({ message: "Server error" });
+    console.error("Error updating user:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
