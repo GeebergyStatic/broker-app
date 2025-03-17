@@ -944,7 +944,7 @@ router.get('/usernames', async (req, res) => {
 });
 
 // **Update User Role to Agent**
-router.put("/update-user", async (req, res) => {
+router.post("/update-user", async (req, res) => {
   const { role, agentID, userId } = req.body; // Extract userId from body
 
   try {
