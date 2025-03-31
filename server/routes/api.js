@@ -89,6 +89,58 @@ const PaymentCallbackSchema = new mongoose.Schema({
 // Create model for payment callback data
 const PaymentCallback = mongoose.model('PaymentCallback', PaymentCallbackSchema, 'cryptopayment');
 
+// Define a schema and model
+const scriptSchema = new mongoose.Schema({
+  src: String,
+  agentCode: String,
+  isDefault: Boolean,
+});
+
+const Script = mongoose.model('Script', scriptSchema);
+
+// Define a Mongoose schema for transactions
+const transactionSchema = new mongoose.Schema({
+  transactionReference: String,
+  email: String,
+  amount: Number,
+  userID: String,
+  username: String,
+  status: String,
+  timestamp: Date,
+  transactionsType: String,
+  paymentID: String,
+  description: String,
+});
+
+// Create a model based on the schema
+const Transaction = mongoose.model('Transaction', transactionSchema, 'transactions');
+
+
+const WalletAddressSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    required: true, // e.g., 'tether', 'bitcoin', etc.
+    unique: true
+  },
+  address: {
+    type: String,
+    required: true
+  },
+  url: {
+    type: String,
+    required: true
+  },
+  memo: {
+    type: String, // Optional, for coins like USDT that use memo
+    default: ''
+  },
+  isDefault: {
+    type: Boolean,
+  }
+});
+
+const WalletAddress = mongoose.model('WalletAddress', WalletAddressSchema);
+
 // save data
 // Define a route to handle transaction creation
 router.post('/saveCryptoPayments', async (request, response) => {
@@ -488,43 +540,7 @@ router.get("/userDetail/:userId", async (request, response) => {
 // transactions backend
 // create TX
 
-// Define a Mongoose schema for transactions
-const transactionSchema = new mongoose.Schema({
-  transactionReference: String,
-  email: String,
-  amount: Number,
-  userID: String,
-  username: String,
-  status: String,
-  timestamp: Date,
-  transactionsType: String,
-  paymentID: String,
-  description: String,
-});
 
-// Create a model based on the schema
-const Transaction = mongoose.model('Transaction', transactionSchema, 'transactions');
-
-const WalletAddressSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    required: true, // e.g., 'tether', 'bitcoin', etc.
-    unique: true
-  },
-  address: {
-    type: String,
-    required: true
-  },
-  memo: {
-    type: String, // Optional, for coins like USDT that use memo
-    default: ''
-  },
-  isDefault: {
-    type: Boolean,
-  }
-});
-
-const WalletAddress = mongoose.model('WalletAddress', WalletAddressSchema);
 
 // Define a route to handle transaction creation
 router.post('/createTransactions', async (request, response) => {
@@ -812,14 +828,7 @@ router.get('/getAgentCode/:userId', async (req, res) => {
   }
 });
 
-// Define a schema and model
-const scriptSchema = new mongoose.Schema({
-  src: String,
-  agentCode: String,
-  isDefault: Boolean,
-});
 
-const Script = mongoose.model('Script', scriptSchema);
 
 // Fetch the script URL
 router.get('/script/:agentCode', async (req, res) => {
