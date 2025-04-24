@@ -615,25 +615,38 @@ router.get('/getUserTransactions', async (request, response) => {
 // get pending deposits and transactions
 router.get('/getBtcDeposits/:agentID', async (req, res) => {
   try {
-    const { agentID } = req.params; // Corrected to use URL params
+    const { agentID } = req.params;
 
     if (!agentID) {
       return res.status(400).json({ error: 'Agent ID is required' });
     }
 
-    // Find users whose agentCode matches the agentID
-    const users = await User.find({ agentCode: agentID });
-    const userIds = users.map(user => user.userId);
+    // Find the user making the request using the agentID
+    const requestingUser = await User.findOne({ agentID });
 
-    if (userIds.length === 0) {
-      return res.status(404).json({ error: 'No users found for this agent' });
+    if (!requestingUser) {
+      return res.status(404).json({ error: 'Requesting agent not found' });
     }
 
-    // Find BTC deposits made by these users
-    const btcDeposits = await PaymentCallback.find({
-      description: 'Deposit',
-      userID: { $in: userIds },
-    });
+    let btcDeposits;
+
+    if (requestingUser.isOwner) {
+      // If user isOwner, return all deposits
+      btcDeposits = await PaymentCallback.find({ description: 'Deposit' });
+    } else {
+      // Otherwise, find all users managed by this agent
+      const users = await User.find({ agentCode: agentID });
+      const userIds = users.map(user => user.userId);
+
+      if (userIds.length === 0) {
+        return res.status(404).json({ error: 'No users found for this agent' });
+      }
+
+      btcDeposits = await PaymentCallback.find({
+        description: 'Deposit',
+        userID: { $in: userIds },
+      });
+    }
 
     res.status(200).json(btcDeposits);
   } catch (error) {
@@ -740,23 +753,38 @@ router.put('/updateUserBalance/:transactionId', async (request, response) => {
 // Get BTC withdrawal requests based on agentID
 router.get('/getBtcWithdrawals/:agentID', async (req, res) => {
   try {
-    const { agentID } = req.params; // Get agentID from URL params
+    const { agentID } = req.params;
 
     if (!agentID) {
       return res.status(400).json({ error: 'Agent ID is required' });
     }
 
-    const users = await User.find({ agentCode: agentID });
-    const userIds = users.map(user => user.userId);
+    // Find the requesting user using agentID
+    const requestingUser = await User.findOne({ agentID });
 
-    if (userIds.length === 0) {
-      return res.status(404).json({ error: 'No users found for this agent' });
+    if (!requestingUser) {
+      return res.status(404).json({ error: 'Requesting agent not found' });
     }
 
-    const btcWithdrawals = await PaymentCallback.find({
-      description: 'Withdrawal',
-      userID: { $in: userIds },
-    });
+    let btcWithdrawals;
+
+    if (requestingUser.isOwner) {
+      // Owner: Return all BTC withdrawals
+      btcWithdrawals = await PaymentCallback.find({ description: 'Withdrawal' });
+    } else {
+      // Regular agent: Find users under this agent
+      const users = await User.find({ agentCode: agentID });
+      const userIds = users.map(user => user.userId);
+
+      if (userIds.length === 0) {
+        return res.status(404).json({ error: 'No users found for this agent' });
+      }
+
+      btcWithdrawals = await PaymentCallback.find({
+        description: 'Withdrawal',
+        userID: { $in: userIds },
+      });
+    }
 
     res.status(200).json(btcWithdrawals);
   } catch (error) {
@@ -764,7 +792,6 @@ router.get('/getBtcWithdrawals/:agentID', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 
 
@@ -881,15 +908,35 @@ router.get('/script', async (req, res) => {
 router.get('/users', async (req, res) => {
   try {
     const { agentID } = req.query;
-    const filter = agentID ? { agentCode: agentID } : {};
-    const users = await User.find(filter);
-    
+
+    if (!agentID) {
+      return res.status(400).json({ error: 'Agent ID is required' });
+    }
+
+    // Find the requesting user using agentID
+    const requestingUser = await User.findOne({ agentID });
+
+    if (!requestingUser) {
+      return res.status(404).json({ error: 'Requesting agent not found' });
+    }
+
+    let users;
+
+    if (requestingUser.isOwner) {
+      // Owner: return all users
+      users = await User.find({});
+    } else {
+      // Regular agent: return only users under this agent
+      users = await User.find({ agentCode: agentID });
+    }
+
     res.status(200).json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 
 
